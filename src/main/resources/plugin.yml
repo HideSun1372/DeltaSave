@@ -1,0 +1,19 @@
+name: DeltaSave
+version: 1.0
+main: com.hidesun1372.deltasave.DeltaSavePlugin
+api-version: "1.21"
+description: A Deltarune-inspired checkpoint save system for Minecraft servers
+authors: [hidesun1372]
+
+commands:
+  save:
+    description: Save your game
+  load:
+    description: Load your last save
+  deletesave:
+    description: Delete your save file
+  saveinfo:
+    description: View save file info
+  givesaveblock:
+    description: Give a Save Block beacon
+    permission: deltasave.admin

@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "com.hidesun1372.deltasave"
-version = "1.0-SNAPSHOT"
+version = "1.1"
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(21))

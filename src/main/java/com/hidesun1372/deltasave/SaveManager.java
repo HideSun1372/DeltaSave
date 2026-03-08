@@ -29,13 +29,12 @@ import java.util.*;
 
 public class SaveManager implements Listener {
 
-    static final String PREFIX = "\u00a76[SAVE] \u00a7r";
+    public static final String PREFIX = "§6[SAVE] §r";
 
     // Default spawn — edit to match your server
-    private static final String DEFAULT_SPAWN_WORLD = "world";
-    private static final double DEFAULT_SPAWN_X = -91;
-    private static final double DEFAULT_SPAWN_Y = -60;
-    private static final double DEFAULT_SPAWN_Z = -40;
+    private String defaultSpawnWorld;
+    private double defaultSpawnX, defaultSpawnY, defaultSpawnZ;
+    private float defaultSpawnYaw, defaultSpawnPitch;
 
     private final DeltaSavePlugin plugin;
 
@@ -65,6 +64,8 @@ public class SaveManager implements Listener {
     /** Pending /deletesave confirmations */
     private final Map<UUID, Boolean> deleteConfirm = new HashMap<>();
 
+    private boolean blockBeaconGui;
+
     // -------------------------------------------------------------------------
     // BlockEntry record
     // -------------------------------------------------------------------------
@@ -78,6 +79,7 @@ public class SaveManager implements Listener {
     public SaveManager(DeltaSavePlugin plugin) {
         this.plugin = plugin;
         loadSaveBlocks();
+        loadDefaultSpawn();
     }
 
     // -------------------------------------------------------------------------
@@ -93,6 +95,44 @@ public class SaveManager implements Listener {
         if (!file.exists()) return;
         FileConfiguration cfg = YamlConfiguration.loadConfiguration(file);
         saveBlockLocations.addAll(cfg.getStringList("locations"));
+    }
+
+    private void loadDefaultSpawn() {
+        blockBeaconGui = plugin.getConfig().getBoolean("blockbeacongui", true);
+        if (!plugin.getConfig().contains("defaultspawn")) return;
+        FileConfiguration cfg = plugin.getConfig();
+        defaultSpawnWorld = cfg.getString("defaultspawn.world");
+        defaultSpawnX     = cfg.getDouble("defaultspawn.x");
+        defaultSpawnY     = cfg.getDouble("defaultspawn.y");
+        defaultSpawnZ     = cfg.getDouble("defaultspawn.z");
+        defaultSpawnYaw   = (float) cfg.getDouble("defaultspawn.yaw");
+        defaultSpawnPitch = (float) cfg.getDouble("defaultspawn.pitch");
+    }
+
+    public void setDefaultSpawn(Player player) {
+        Location loc = player.getLocation();
+        defaultSpawnWorld = loc.getWorld().getName();
+        defaultSpawnX     = loc.getX();
+        defaultSpawnY     = loc.getY();
+        defaultSpawnZ     = loc.getZ();
+        defaultSpawnYaw   = loc.getYaw();
+        defaultSpawnPitch = loc.getPitch();
+        FileConfiguration cfg = plugin.getConfig();
+        cfg.set("defaultspawn.world",  defaultSpawnWorld);
+        cfg.set("defaultspawn.x",      defaultSpawnX);
+        cfg.set("defaultspawn.y",      defaultSpawnY);
+        cfg.set("defaultspawn.z",      defaultSpawnZ);
+        cfg.set("defaultspawn.yaw",    (double) defaultSpawnYaw);
+        cfg.set("defaultspawn.pitch",  (double) defaultSpawnPitch);
+        plugin.saveConfig();
+        player.sendMessage(PREFIX + "§aDefault spawn set!");
+    }
+
+    public void toggleBeaconGui(Player player) {
+        blockBeaconGui = !blockBeaconGui;
+        plugin.getConfig().set("blockbeacongui", blockBeaconGui);
+        plugin.saveConfig();
+        player.sendMessage(PREFIX + (blockBeaconGui ? "§aBeacon GUI blocked." : "§cBeacon GUI unblocked."));
     }
 
     private void saveSaveBlocks() {
@@ -147,7 +187,7 @@ public class SaveManager implements Listener {
         player.setFoodLevel(20);
         player.setSaturation(20f);
 
-        player.sendMessage(PREFIX + "\u00a7d* Your HP was maxed out.");
+        player.sendMessage(PREFIX + "§d* Your HP was maxed out.");
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 2f);
 
         File f = getSaveFile(player);
@@ -234,10 +274,10 @@ public class SaveManager implements Listener {
         trySave(cfg, f, player);
 
         player.sendMessage("");
-        player.sendMessage(PREFIX + "\u00a7a\u00a7l\u2713 Game saved!");
+        player.sendMessage(PREFIX + "§a§l✓ Game saved!");
         if (player.isOp()) {
-            player.sendMessage("\u00a78\u00a7o   " + loc);
-            player.sendMessage("\u00a78\u00a7o   Blocks placed: " + curPlaced
+            player.sendMessage("§8§o   " + loc);
+            player.sendMessage("§8§o   Blocks placed: " + curPlaced
                     + " (+" + (curPlaced - prevPlaced) + ")"
                     + " | Blocks broken: " + curBroken
                     + " (+" + (curBroken - prevBroken) + ")");
@@ -252,18 +292,18 @@ public class SaveManager implements Listener {
     public void loadGame(Player player) {
         File f = getSaveFile(player);
         if (!f.exists() || !YamlConfiguration.loadConfiguration(f).getBoolean("exists", false)) {
-            player.sendMessage(PREFIX + "\u00a7cNo save file found!");
+            player.sendMessage(PREFIX + "§cNo save file found!");
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return;
         }
 
-        player.sendMessage(PREFIX + "\u00a7eLoading your save...");
+        player.sendMessage(PREFIX + "§eLoading your save...");
         FileConfiguration cfg = YamlConfiguration.loadConfiguration(f);
 
         // -- Teleport --
-        String worldName = cfg.getString("location.world", DEFAULT_SPAWN_WORLD);
+        String worldName = cfg.getString("location.world", defaultSpawnWorld);
         World world = Bukkit.getWorld(worldName);
-        if (world == null) world = Bukkit.getWorlds().get(0);
+        if (world == null) world = Bukkit.getWorlds().getFirst();
         Location loc = new Location(world,
                 cfg.getDouble("location.x"),
                 cfg.getDouble("location.y"),
@@ -300,7 +340,7 @@ public class SaveManager implements Listener {
                 String typeName = effects.getString(key + ".type");
                 int duration    = effects.getInt(key + ".duration");
                 int amplifier   = effects.getInt(key + ".amplifier");
-                PotionEffectType pet = PotionEffectType.getByName(typeName);
+                PotionEffectType pet = Registry.EFFECT.get(NamespacedKey.minecraft(typeName));
                 if (pet != null) player.addPotionEffect(new PotionEffect(pet, duration, amplifier));
             }
         }
@@ -334,9 +374,9 @@ public class SaveManager implements Listener {
 
         checkpointSet.add(uuid);
 
-        player.sendMessage(PREFIX + "\u00a7a\u00a7l\u2713 Save loaded!");
+        player.sendMessage(PREFIX + "§a§l✓ Save loaded!");
         if (player.isOp()) {
-            player.sendMessage("\u00a7a\u00a7lRestored " + rolledPlaced
+            player.sendMessage("§a§lRestored " + rolledPlaced
                     + " placed and " + rolledBroken + " broken blocks.");
         }
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.2f);
@@ -353,7 +393,7 @@ public class SaveManager implements Listener {
         checkpointSet.remove(uuid);
         placedBuffer.remove(uuid);
         brokenBuffer.remove(uuid);
-        target.sendMessage(PREFIX + "\u00a7cYour save file has been deleted.");
+        target.sendMessage(PREFIX + "§cYour save file has been deleted.");
         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_ITEM_BREAK, 1f, 0.8f);
     }
 
@@ -364,7 +404,7 @@ public class SaveManager implements Listener {
     public void sendSaveInfo(Player sender, Player target) {
         File f = getSaveFile(target);
         if (!f.exists() || !YamlConfiguration.loadConfiguration(f).getBoolean("exists", false)) {
-            sender.sendMessage(PREFIX + "\u00a7c" + target.getName() + " doesn't have a save file yet!");
+            sender.sendMessage(PREFIX + "§c" + target.getName() + " doesn't have a save file yet!");
             return;
         }
         FileConfiguration cfg = YamlConfiguration.loadConfiguration(f);
@@ -380,22 +420,22 @@ public class SaveManager implements Listener {
         int savedPlaced   = cfg.getInt("save.blocks.placed.count", 0);
         int savedBroken   = cfg.getInt("save.blocks.broken.count", 0);
 
-        sender.sendMessage(PREFIX + "\u00a76Save Info for " + target.getName() + ":");
-        sender.sendMessage("\u00a77  Player: \u00a7f"   + cfg.getString("name", target.getName()));
-        sender.sendMessage("\u00a77  Location: \u00a7f"
+        sender.sendMessage(PREFIX + "§6Save Info for " + target.getName() + ":");
+        sender.sendMessage("§7  Player: §f"   + cfg.getString("name", target.getName()));
+        sender.sendMessage("§7  Location: §f"
                 + cfg.getString("location.world") + " "
                 + String.format("%.1f", cfg.getDouble("location.x")) + ", "
                 + String.format("%.1f", cfg.getDouble("location.y")) + ", "
                 + String.format("%.1f", cfg.getDouble("location.z")));
-        sender.sendMessage("\u00a77  Health: \u00a7f"
+        sender.sendMessage("§7  Health: §f"
                 + String.format("%.1f", cfg.getDouble("health"))
                 + "/" + String.format("%.1f", cfg.getDouble("maxhealth")));
-        sender.sendMessage("\u00a77  Gamemode: \u00a7f" + cfg.getString("gamemode", "SURVIVAL"));
-        sender.sendMessage("\u00a77  Playtime: \u00a7f" + formatPlaytime(totalMs));
-        sender.sendMessage("\u00a77  Blocks placed: \u00a7f" + savedPlaced
-                + (unsavedPlaced > 0 ? " \u00a77(+" + unsavedPlaced + " unsaved)" : ""));
-        sender.sendMessage("\u00a77  Blocks broken: \u00a7f" + savedBroken
-                + (unsavedBroken > 0 ? " \u00a77(+" + unsavedBroken + " unsaved)" : ""));
+        sender.sendMessage("§7  Gamemode: §f" + cfg.getString("gamemode", "SURVIVAL"));
+        sender.sendMessage("§7  Playtime: §f" + formatPlaytime(totalMs));
+        sender.sendMessage("§7  Blocks placed: §f" + savedPlaced
+                + (unsavedPlaced > 0 ? " §7(+" + unsavedPlaced + " unsaved)" : ""));
+        sender.sendMessage("§7  Blocks broken: §f" + savedBroken
+                + (unsavedBroken > 0 ? " §7(+" + unsavedBroken + " unsaved)" : ""));
     }
 
     private String formatPlaytime(long ms) {
@@ -432,7 +472,7 @@ public class SaveManager implements Listener {
         String key = locationToKey(event.getBlock().getLocation());
         saveBlockLocations.add(key);
         saveSaveBlocks();
-        player.sendMessage(PREFIX + "\u00a7aSave Block registered at " + event.getBlock().getLocation() + "!");
+        player.sendMessage(PREFIX + "§aSave Block registered at " + event.getBlock().getLocation() + "!");
     }
 
     @EventHandler
@@ -443,8 +483,17 @@ public class SaveManager implements Listener {
         saveBlockLocations.remove(key);
         saveSaveBlocks();
         if (event.getPlayer().isOp()) {
-            event.getPlayer().sendMessage(PREFIX + "\u00a7cSave Block unregistered.");
+            event.getPlayer().sendMessage(PREFIX + "§cSave Block unregistered.");
         }
+    }
+
+    @EventHandler
+    public void onBeaconOpen(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        Block clicked = event.getClickedBlock();
+        if (clicked == null || clicked.getType() != Material.BEACON) return;
+        if (!blockBeaconGui) return;
+        event.setCancelled(true);
     }
 
     @EventHandler
@@ -495,11 +544,11 @@ public class SaveManager implements Listener {
         if (player.hasMetadata("savemsg_cooldown")) return;
 
         List<String> messages = List.of(
-                "\u00a7d* The power of saving shines within you.",
-                "\u00a7d* A power shines within... it's you!",
-                "\u00a7d* Seeing such a friendly save point fills you with power.",
-                "\u00a7d* You feel your sins crawling on your back...",
-                "\u00a7d* But nobody came. (Just kidding, you're here!)"
+                "§d* The power of saving shines within you.",
+                "§d* A power shines within... it's you!",
+                "§d* Seeing such a friendly save point fills you with power.",
+                "§d* You feel your sins crawling on your back...",
+                "§d* But nobody came. (Just kidding, you're here!)"
         );
         player.sendMessage(messages.get(new Random().nextInt(messages.size())));
         player.setMetadata("savemsg_cooldown", new FixedMetadataValue(plugin, true));
@@ -519,9 +568,9 @@ public class SaveManager implements Listener {
                 trySave(cfg, f, player);
                 checkpointSet.add(player.getUniqueId());
                 loadGame(player);
-                player.sendMessage(PREFIX + "\u00a7eWelcome back!");
+                player.sendMessage(PREFIX + "§eWelcome back!");
             } else {
-                player.sendMessage(PREFIX + "\u00a77No checkpoint found. Find a Save Block to create your first save!");
+                player.sendMessage(PREFIX + "§7No checkpoint found. Find a Save Block to create your first save!");
                 teleportToDefaultSpawn(player);
             }
         }, 5L);
@@ -533,17 +582,20 @@ public class SaveManager implements Listener {
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (checkpointSet.contains(player.getUniqueId())) {
                 loadGame(player);
-                player.sendMessage(PREFIX + "\u00a7eRespawned at your last checkpoint!");
+                player.sendMessage(PREFIX + "§eRespawned at your last checkpoint!");
             } else {
-                player.sendMessage(PREFIX + "\u00a77No checkpoint set.");
+                player.sendMessage(PREFIX + "§7No checkpoint set.");
                 teleportToDefaultSpawn(player);
             }
         }, 5L);
     }
 
     private void teleportToDefaultSpawn(Player player) {
-        World world = Bukkit.getWorld(DEFAULT_SPAWN_WORLD);
-        if (world == null) world = Bukkit.getWorlds().get(0);
-        player.teleport(new Location(world, DEFAULT_SPAWN_X, DEFAULT_SPAWN_Y, DEFAULT_SPAWN_Z));
+        World world = defaultSpawnWorld != null ? Bukkit.getWorld(defaultSpawnWorld) : null;
+        if (world == null) world = Bukkit.getWorlds().getFirst();
+        Location loc = defaultSpawnWorld != null
+                ? new Location(world, defaultSpawnX, defaultSpawnY, defaultSpawnZ, defaultSpawnYaw, defaultSpawnPitch)
+                : world.getSpawnLocation();
+        player.teleport(loc);
     }
 }

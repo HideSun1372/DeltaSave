@@ -1,5 +1,5 @@
 name: DeltaSave
-version: 1.1.1
+version: 1.2
 main: com.hidesun1372.deltasave.DeltaSavePlugin
 api-version: "1.21"
 description: A Deltarune-inspired checkpoint save system for Minecraft servers
@@ -21,3 +21,7 @@ commands:
     description: Sets the default spawn location.
   togglebeacongui:
     description: Toggles the beacon GUI on or off.
+  storage:
+    description: Open a player's storage (operators only)
+  scannow:
+    description: Instantly scan and deregister missing save blocks

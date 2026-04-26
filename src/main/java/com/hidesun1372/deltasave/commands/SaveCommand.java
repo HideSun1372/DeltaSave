@@ -7,13 +7,14 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jspecify.annotations.NonNull;
 
 public class SaveCommand implements CommandExecutor {
     private final SaveManager saveManager;
     public SaveCommand(SaveManager saveManager) { this.saveManager = saveManager; }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+    public boolean onCommand(@NonNull CommandSender sender, @NonNull Command cmd, @NonNull String label, String[] args) {
         if (!(sender instanceof Player p)) {
             sender.sendMessage("§cOnly players can use this command!");
             return true;

@@ -22,7 +22,6 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -68,6 +67,8 @@ public class SaveManager implements Listener {
 
     /** Pending /deletesave confirmations */
     private final Map<UUID, Boolean> deleteConfirm = new HashMap<>();
+
+    private final Set<UUID> beaconMsgCooldowns = new HashSet<>();
 
     private boolean blockBeaconGui;
     private long scanInterval;
@@ -181,12 +182,13 @@ public class SaveManager implements Listener {
         String soundName = s.getString("sound", "");
         float volume = (float) s.getDouble("volume", 1.0);
         float pitch  = (float) s.getDouble("pitch", 1.0);
-        try {
-            Sound sound = Sound.valueOf(soundName.toUpperCase());
-            player.getWorld().playSound(player.getLocation(), sound, volume, pitch);
-        } catch (IllegalArgumentException e) {
+        NamespacedKey soundKey = NamespacedKey.fromString(soundName.toLowerCase());
+        Sound sound = soundKey != null ? Registry.SOUNDS.get(soundKey) : null;
+        if (sound == null) {
             plugin.getLogger().warning("Invalid sound '" + soundName + "' for sounds." + key);
+            return;
         }
+        player.getWorld().playSound(player.getLocation(), sound, volume, pitch);
     }
 
     public long getDeleteConfirmTimeoutGui() { return deleteConfirmTimeoutGui; }
@@ -415,10 +417,6 @@ public class SaveManager implements Listener {
             }
         }
 
-        // -- Block rollback: only the in-memory buffer matters here.
-        //    Anything already committed to disk was saved intentionally
-        //    and should stay in the world. We only undo what happened
-        //    since the last save. --
         UUID uuid = player.getUniqueId();
 
         List<BlockEntry> bufferedPlaced = placedBuffer.getOrDefault(uuid, List.of());
@@ -656,7 +654,7 @@ public class SaveManager implements Listener {
         if (!checkpointSet.contains(player.getUniqueId())) return;
         Block b = event.getBlock();
         placedBuffer
-                .computeIfAbsent(player.getUniqueId(), k -> new ArrayList<>())
+                .computeIfAbsent(player.getUniqueId(), _ -> new ArrayList<>())
                 .add(new BlockEntry(b.getWorld().getName(), b.getX(), b.getY(), b.getZ(), b.getType().name()));
     }
 
@@ -667,7 +665,7 @@ public class SaveManager implements Listener {
         if (!checkpointSet.contains(player.getUniqueId())) return;
         Block b = event.getBlock();
         brokenBuffer
-                .computeIfAbsent(player.getUniqueId(), k -> new ArrayList<>())
+                .computeIfAbsent(player.getUniqueId(), _ -> new ArrayList<>())
                 .add(new BlockEntry(b.getWorld().getName(), b.getX(), b.getY(), b.getZ(), b.getType().name()));
     }
 
@@ -682,12 +680,13 @@ public class SaveManager implements Listener {
 
         Block standing = to.getBlock().getRelative(0, -1, 0);
         if (standing.getType() != Material.BEACON) return;
-        if (player.hasMetadata("savemsg_cooldown")) return;
+        UUID pid = player.getUniqueId();
+        if (beaconMsgCooldowns.contains(pid)) return;
 
         player.sendMessage(beaconMessages.get(new Random().nextInt(beaconMessages.size())));
-        player.setMetadata("savemsg_cooldown", new FixedMetadataValue(plugin, true));
+        beaconMsgCooldowns.add(pid);
         Bukkit.getScheduler().runTaskLater(plugin,
-                () -> player.removeMetadata("savemsg_cooldown", plugin), beaconMsgCooldown);
+                () -> beaconMsgCooldowns.remove(pid), beaconMsgCooldown);
     }
 
     @EventHandler

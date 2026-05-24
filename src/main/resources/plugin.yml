@@ -1,7 +1,7 @@
 name: DeltaSave
 version: 1.2
 main: com.hidesun1372.deltasave.DeltaSavePlugin
-api-version: "1.21"
+api-version: "26"
 description: A Deltarune-inspired checkpoint save system for Minecraft servers
 authors: [hidesun1372]
 

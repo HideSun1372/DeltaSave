@@ -1,0 +1,75 @@
+# -----------------------------------------------
+# DeltaSave Configuration
+# -----------------------------------------------
+
+# Prefix prepended to all plugin messages
+prefix: "§6[SAVE] §r"
+
+# Block the vanilla beacon GUI when right-clicking any beacon
+block-beacon-gui: true
+
+# How often to scan for missing save block beacons, in ticks (20 ticks = 1 second)
+scan-interval: 1200
+
+# Cooldown before a player can receive another step-on beacon message, in ticks
+beacon-message-cooldown: 140
+
+# Delete confirmation window — GUI double-click (ticks)
+delete-confirm-timeout-gui: 160
+
+# Delete confirmation window — /deletesave command re-run (ticks)
+delete-confirm-timeout-command: 160
+
+# Random messages shown when a player steps on any beacon
+beacon-messages:
+  - "§d* The power of saving shines within you."
+  - "§d* A power shines within... it's you!"
+  - "§d* Seeing such a friendly save point fills you with power."
+  - "§d* You feel your sins crawling on your back..."
+  - "§d* But nobody came. (Just kidding, you're here!)"
+
+# Player-facing gameplay messages
+messages:
+  save-success:    "§a§l✓ Game saved!"
+  save-hp-restored: "§d* Your HP was maxed out."
+  load-loading:    "§eLoading your save..."
+  load-success:    "§a§l✓ Save loaded!"
+  delete-success:  "§cYour save file has been deleted."
+  no-save:         "§cNo save file found!"
+  welcome-back:    "§eWelcome back!"
+  no-checkpoint:   "§7No checkpoint found. Find a Save Block to create your first save!"
+  respawned:       "§eRespawned at your last checkpoint!"
+
+# Sounds played during gameplay
+# Use Bukkit sound names: https://jd.papermc.io/paper/1.21/org/bukkit/Sound.html
+sounds:
+  save:
+    sound: ENTITY_PLAYER_LEVELUP
+    volume: 0.5
+    pitch: 2.0
+  save-orb:
+    sound: ENTITY_EXPERIENCE_ORB_PICKUP
+    volume: 1.0
+    pitch: 1.5
+  load:
+    sound: ENTITY_PLAYER_LEVELUP
+    volume: 1.0
+    pitch: 1.2
+  delete:
+    sound: ENTITY_ITEM_BREAK
+    volume: 1.0
+    pitch: 0.8
+  no-save:
+    sound: ENTITY_VILLAGER_NO
+    volume: 1.0
+    pitch: 1.0
+
+# Default spawn location — set automatically via /setdefaultspawn
+# You may also edit these values manually.
+# defaultspawn:
+#   world: world
+#   x: 0.0
+#   y: 64.0
+#   z: 0.0
+#   yaw: 0.0
+#   pitch: 0.0

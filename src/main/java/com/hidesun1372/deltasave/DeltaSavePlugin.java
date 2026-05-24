@@ -15,13 +15,15 @@ public class DeltaSavePlugin extends JavaPlugin {
 
     private static DeltaSavePlugin instance;
 
+    private SaveManager saveManager;
+
     @Override
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
         Bukkit.getConsoleSender().sendMessage(Component.text("============================").color(NamedTextColor.GRAY));
         Bukkit.getConsoleSender().sendMessage(Component.text("* ").color(NamedTextColor.DARK_PURPLE).append(Component.text("The POWER is being restored...").color(NamedTextColor.LIGHT_PURPLE)));
-        SaveManager saveManager = new SaveManager(this);
+        this.saveManager = new SaveManager(this);
         saveManager.startScanTask();
         Bukkit.getConsoleSender().sendMessage(Component.text("  Save Manager:   ").color(NamedTextColor.YELLOW).append(Component.text("Loaded!").color(NamedTextColor.WHITE)));
 
@@ -58,6 +60,9 @@ public class DeltaSavePlugin extends JavaPlugin {
 
         Bukkit.getConsoleSender().sendMessage(Component.text("============================").color(NamedTextColor.GRAY));
 
+    }
+    public SaveManager getSaveManager() {
+        return saveManager;
     }
 
     @Override

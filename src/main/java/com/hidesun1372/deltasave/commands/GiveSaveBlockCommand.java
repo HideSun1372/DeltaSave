@@ -26,7 +26,7 @@ public class GiveSaveBlockCommand implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(@NonNull CommandSender sender, @NonNull Command cmd, @NonNull String label, String[] args) {
+    public boolean onCommand(@NonNull CommandSender sender, @NonNull Command cmd, @NonNull String label, String @NonNull [] args) {
         if (!(sender instanceof Player p)) {
             sender.sendMessage("§cOnly players can use this command!");
             return true;

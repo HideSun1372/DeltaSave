@@ -102,8 +102,8 @@ Fully customize every **message**, **sound effect**, and **beacon flavor text** 
 
 ## 🛠️ Compatibility
 
-- **Minecraft API:** `1.21`
-- **Latest Plugin Version:** `1.2`
+- **Minecraft API:** `26`
+- **Latest Plugin Version:** `1.3`
 
 ---
 

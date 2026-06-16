@@ -36,9 +36,11 @@ bin/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+### Tools ###
 .vscode/
 .claude/
+.idea/
+desktop.ini
 
 ### Mac OS ###
 .DS_Store

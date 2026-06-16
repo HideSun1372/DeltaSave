@@ -55,7 +55,7 @@ public class DeltaSavePlugin extends JavaPlugin {
         Bukkit.getConsoleSender().sendMessage(Component.text("* ").color(NamedTextColor.DARK_PURPLE).append(Component.text("The PLUGIN has successfully initialized.").color(NamedTextColor.LIGHT_PURPLE)));
         Bukkit.getConsoleSender().sendMessage(Component.text("* ").color(NamedTextColor.DARK_PURPLE)
                 .append(Component.text("DeltaSave ").color(NamedTextColor.LIGHT_PURPLE)
-                        .append(Component.text("v" + getDescription().getVersion() + " ").color(NamedTextColor.GOLD)
+                        .append(Component.text("v" + getPluginMeta().getVersion() + " ").color(NamedTextColor.GOLD)
                                 .append(Component.text("- Ready!").color(NamedTextColor.LIGHT_PURPLE)))));
 
         boolean hasPerms = getServer().getPluginManager().getPlugin("LuckPerms") != null
@@ -79,7 +79,7 @@ public class DeltaSavePlugin extends JavaPlugin {
         Bukkit.getConsoleSender().sendMessage(Component.text("* ").color(NamedTextColor.DARK_PURPLE).append(Component.text("See you again. ").color(NamedTextColor.LIGHT_PURPLE)));
         Bukkit.getConsoleSender().sendMessage(Component.text("* ").color(NamedTextColor.DARK_PURPLE)
                 .append(Component.text("DeltaSave ").color(NamedTextColor.LIGHT_PURPLE)
-                        .append(Component.text("v" + getDescription().getVersion() + " ").color(NamedTextColor.GOLD)
+                        .append(Component.text("v" + getPluginMeta().getVersion() + " ").color(NamedTextColor.GOLD)
                                 .append(Component.text("- Disabled. ").color(NamedTextColor.LIGHT_PURPLE)))));
         Bukkit.getConsoleSender().sendMessage(Component.text("============================").color(NamedTextColor.GRAY));
     }

@@ -346,7 +346,7 @@ public class SaveManager implements Listener {
 
         player.sendMessage("");
         player.sendMessage(PREFIX + msg("save-success"));
-        if (player.isOp()) {
+        if (player.hasPermission("deltasave.admin")) {
             player.sendMessage("§8§o   " + loc);
             player.sendMessage("§8§o   Blocks placed: " + curPlaced
                     + " (+" + (curPlaced - prevPlaced) + ")"
@@ -443,7 +443,7 @@ public class SaveManager implements Listener {
         checkpointSet.add(uuid);
 
         player.sendMessage(PREFIX + msg("load-success"));
-        if (player.isOp()) {
+        if (player.hasPermission("deltasave.admin")) {
             player.sendMessage("§a§lRestored " + rolledPlaced
                     + " placed and " + rolledBroken + " broken blocks.");
         }
@@ -562,7 +562,7 @@ public class SaveManager implements Listener {
     public void onBeaconPlace(BlockPlaceEvent event) {
         if (event.getBlock().getType() != Material.BEACON) return;
         Player player = event.getPlayer();
-        if (!player.isOp()) return;
+        if (!player.hasPermission("deltasave.admin")) return;
 
         ItemStack held = player.getInventory().getItemInMainHand();
         ItemMeta heldMeta = held.getItemMeta();
@@ -617,7 +617,7 @@ public class SaveManager implements Listener {
                 + " save block" + (toRemove.size() == 1 ? "" : "s")
                 + " unregistered (no longer present in world).";
         for (Player op : Bukkit.getOnlinePlayers()) {
-            if (op.isOp()) op.sendMessage(msg);
+            if (op.hasPermission("deltasave.admin")) op.sendMessage(msg);
         }
         return toRemove.size();
     }

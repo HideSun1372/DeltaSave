@@ -20,7 +20,7 @@ public class SetDefaultSpawnCommand implements CommandExecutor {
             sender.sendMessage("Only players can use this command.");
             return true;
         }
-        if (!player.isOp()) {
+        if (!player.hasPermission("deltasave.admin")) {
             player.sendMessage(SaveManager.PREFIX + "§cYou don't have permission to do that.");
             return true;
         }

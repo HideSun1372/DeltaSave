@@ -16,7 +16,7 @@ public class ScanNowCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NonNull CommandSender sender, @NonNull Command command, @NonNull String label, String @NonNull [] args) {
-        if (!sender.isOp()) {
+        if (!sender.hasPermission("deltasave.admin")) {
             sender.sendMessage(SaveManager.PREFIX + "§cYou don't have permission to do that.");
             return true;
         }

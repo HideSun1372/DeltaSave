@@ -41,26 +41,26 @@ messages:
   respawned:       "§eRespawned at your last checkpoint!"
 
 # Sounds played during gameplay
-# Use Bukkit sound names: https://jd.papermc.io/paper/1.21/org/bukkit/Sound.html
+# Use Bukkit sound names for your server version.
 sounds:
   save:
-    sound: ENTITY_PLAYER_LEVELUP
+    sound: entity.player.levelup
     volume: 0.5
     pitch: 2.0
   save-orb:
-    sound: ENTITY_EXPERIENCE_ORB_PICKUP
+    sound: entity.experience_orb.pickup
     volume: 1.0
     pitch: 1.5
   load:
-    sound: ENTITY_PLAYER_LEVELUP
+    sound: entity.player.levelup
     volume: 1.0
     pitch: 1.2
   delete:
-    sound: ENTITY_ITEM_BREAK
+    sound: entity.item.break
     volume: 1.0
     pitch: 0.8
   no-save:
-    sound: ENTITY_VILLAGER_NO
+    sound: entity.villager.no
     volume: 1.0
     pitch: 1.0
 

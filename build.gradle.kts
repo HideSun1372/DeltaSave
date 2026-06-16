@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "com.hidesun1372.deltasave"
-version = "1.3"
+version = "1.4"
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(25))
@@ -16,6 +16,10 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:26.1.2.build.+")
+}
+
+tasks.processResources {
+    expand("version" to project.version)
 }
 
 tasks.withType<JavaCompile> {

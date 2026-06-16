@@ -20,17 +20,13 @@ public class DeleteSaveCommand implements CommandExecutor {
             sender.sendMessage("§cOnly players can use this command!");
             return true;
         }
-        if (!p.isOp()) {
+        if (!p.hasPermission("deltasave.admin")) {
             p.sendMessage("§cYou don't have permission to use this command!");
             return true;
         }
 
         // Admin deleting another player's save file
         if (args.length > 0) {
-            if (!p.hasPermission("deltasave.admin")) {
-                p.sendMessage("§cYou don't have permission to delete other players' saves!");
-                return true;
-            }
             Player target = Bukkit.getPlayer(args[0]);
             if (target == null) { p.sendMessage("§cPlayer not found!"); return true; }
             saveManager.deleteSave(target);

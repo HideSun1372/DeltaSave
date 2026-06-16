@@ -24,7 +24,7 @@ public class StorageCommand implements CommandExecutor {
             sender.sendMessage("§cOnly players can use this command!");
             return true;
         }
-        if (!p.isOp()) {
+        if (!p.hasPermission("deltasave.admin")) {
             p.sendMessage("§cYou don't have permission to use this command!");
             return true;
         }

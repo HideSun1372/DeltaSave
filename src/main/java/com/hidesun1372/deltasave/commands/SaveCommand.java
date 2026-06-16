@@ -19,11 +19,11 @@ public class SaveCommand implements CommandExecutor {
             sender.sendMessage("§cOnly players can use this command!");
             return true;
         }
-        if (!p.isOp()) {
+        if (!p.hasPermission("deltasave.admin")) {
             p.sendMessage("§cYou can't use that command.");
             return true;
         }
-        if (args.length > 0 && p.hasPermission("deltasave.admin")) {
+        if (args.length > 0) {
             Player target = Bukkit.getPlayer(args[0]);
             if (target == null) { p.sendMessage("§cPlayer not found!"); return true; }
             saveManager.saveGame(target);

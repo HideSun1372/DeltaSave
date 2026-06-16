@@ -11,12 +11,12 @@
 ### 💾 Checkpoint Save System
 The heart of DeltaSave — a full-state save and load system that captures everything:
 
-- 📍 **Location** — World, coordinates, and rotation
-- ❤️ **Health & Food** — Including max health and saturation
-- 🎒 **Full Inventory** — All 36 slots plus armor
-- 🧪 **Potion Effects** — Every active effect preserved
-- 🎮 **Gamemode** — Saved and restored seamlessly
-- ⏱️ **Playtime** — Accumulated across all sessions
+* 📍 **Location** — World, coordinates, and rotation
+* ❤️ **Health & Food** — Including max health and saturation
+* 🎒 **Full Inventory** — All 36 slots plus armor
+* 🧪 **Potion Effects** — Every active effect preserved
+* 🎮 **Gamemode** — Saved and restored seamlessly
+* ⏱️ **Playtime** — Accumulated across all sessions
 
 ### 🔮 Save Blocks
 Admins can craft unique save blocks tied to a **location name** and **chapter**. Players interact with these beacons to open the Save Menu — no commands needed. Save blocks are automatically scanned and unregistered if ever destroyed, keeping your world clean.

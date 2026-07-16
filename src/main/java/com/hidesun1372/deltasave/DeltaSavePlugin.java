@@ -8,6 +8,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.InventoryHolder;
 import java.util.Objects;
 
 
@@ -73,6 +75,14 @@ public class DeltaSavePlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            InventoryHolder holder = player.getOpenInventory().getTopInventory().getHolder();
+            if (holder instanceof SaveMenuGui.SaveMenuHolder
+                    || holder instanceof CheckGui.CheckHolder
+                    || holder instanceof StorageGui.StorageHolder) {
+                player.closeInventory();
+            }
+        }
         Bukkit.getConsoleSender().sendMessage(Component.text("============================").color(NamedTextColor.GRAY));
         Bukkit.getConsoleSender().sendMessage(Component.text("* ").color(NamedTextColor.DARK_PURPLE).append(Component.text("Saving... ").color(NamedTextColor.LIGHT_PURPLE)));
         Bukkit.getConsoleSender().sendMessage(Component.text("* ").color(NamedTextColor.DARK_PURPLE).append(Component.text("Your progress has been kept. ").color(NamedTextColor.LIGHT_PURPLE)));

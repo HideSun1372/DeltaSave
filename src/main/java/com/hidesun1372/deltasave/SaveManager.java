@@ -40,9 +40,9 @@ public class SaveManager implements Listener {
 
     private final DeltaSavePlugin plugin;
 
-    // -------------------------------------------------------------------------
+
     // In-memory state — no disk reads/writes except at save, load, join
-    // -------------------------------------------------------------------------
+
 
     record SaveBlockData(String name, int chapter) {}
 
@@ -87,15 +87,15 @@ public class SaveManager implements Listener {
 
     public void setSaveMenuGui(SaveMenuGui gui) { this.saveMenuGui = gui; }
 
-    // -------------------------------------------------------------------------
+
     // BlockEntry record
-    // -------------------------------------------------------------------------
+
 
     record BlockEntry(String world, int x, int y, int z, String type) {}
 
-    // -------------------------------------------------------------------------
+
     // Constructor
-    // -------------------------------------------------------------------------
+
 
     public SaveManager(DeltaSavePlugin plugin) {
         this.plugin = plugin;
@@ -103,9 +103,9 @@ public class SaveManager implements Listener {
         loadConfig();
     }
 
-    // -------------------------------------------------------------------------
+
     // Save-block persistence
-    // -------------------------------------------------------------------------
+
 
     private File getSaveBlocksFile() {
         return new File(plugin.getDataFolder(), "saveblocks.yml");
@@ -217,9 +217,9 @@ public class SaveManager implements Listener {
         return loc.getWorld().getName() + ":" + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ();
     }
 
-    // -------------------------------------------------------------------------
+
     // Save file helpers
-    // -------------------------------------------------------------------------
+
 
     private File getSaveFile(Player player) {
         File dir = new File(plugin.getDataFolder(), "saves");
@@ -237,9 +237,9 @@ public class SaveManager implements Listener {
         }
     }
 
-    // -------------------------------------------------------------------------
+
     // saveGame — the ONLY place block tracking is written to disk
-    // -------------------------------------------------------------------------
+
 
     public void saveGame(Player player) {
         saveGame(player, null);
@@ -356,9 +356,9 @@ public class SaveManager implements Listener {
         playConfigSound(player, "save-orb");
     }
 
-    // -------------------------------------------------------------------------
+
     // loadGame
-    // -------------------------------------------------------------------------
+
 
     public void loadGame(Player player) {
         File f = getSaveFile(player);
@@ -450,9 +450,9 @@ public class SaveManager implements Listener {
         playConfigSound(player, "load");
     }
 
-    // -------------------------------------------------------------------------
+
     // deleteSave
-    // -------------------------------------------------------------------------
+
 
     public void deleteSave(Player target) {
         File f = getSaveFile(target);
@@ -482,9 +482,9 @@ public class SaveManager implements Listener {
         playConfigSound(target, "delete");
     }
 
-    // -------------------------------------------------------------------------
+
     // sendSaveInfo
-    // -------------------------------------------------------------------------
+
 
     public void sendSaveInfo(Player sender, Player target) {
         File f = getSaveFile(target);
@@ -546,17 +546,13 @@ public class SaveManager implements Listener {
         return hours + "h " + minutes + "m " + secs + "s";
     }
 
-    // -------------------------------------------------------------------------
     // Confirmation map (used by DeleteSaveCommand)
-    // -------------------------------------------------------------------------
 
     public Map<UUID, Boolean> getDeleteConfirm() {
         return deleteConfirm;
     }
 
-    // -------------------------------------------------------------------------
-    // Events
-    // -------------------------------------------------------------------------
+    // Event:
 
     @EventHandler
     public void onBeaconPlace(BlockPlaceEvent event) {

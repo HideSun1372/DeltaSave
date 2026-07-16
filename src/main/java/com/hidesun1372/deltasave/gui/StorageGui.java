@@ -41,9 +41,9 @@ public class StorageGui implements Listener {
 
     public void setSaveMenuGui(SaveMenuGui gui) { this.saveMenuGui = gui; }
 
-    // -------------------------------------------------------------------------
+    
     // Open
-    // -------------------------------------------------------------------------
+    
 
     public void open(Player player, String locationName, int chapter, int page) {
         List<Integer> itemSlots = availableSlots(page, chapter);
@@ -76,9 +76,9 @@ public class StorageGui implements Listener {
         player.openInventory(inv);
     }
 
-    // -------------------------------------------------------------------------
+    
     // Events
-    // -------------------------------------------------------------------------
+    
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
@@ -116,26 +116,28 @@ public class StorageGui implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!(event.getInventory().getHolder() instanceof StorageHolder holder)) return;
-        if (!(event.getPlayer() instanceof Player player)) return;
+        try {
+            if (!(event.getInventory().getHolder() instanceof StorageHolder holder)) return;
+            if (!(event.getPlayer() instanceof Player player)) return;
 
-        List<Integer> itemSlots = availableSlots(holder.page, holder.chapter);
-        int offset   = offsetForPage(holder.page, holder.chapter);
-        int capacity = totalCapacity(holder.chapter);
+            List<Integer> itemSlots = availableSlots(holder.page, holder.chapter);
+            int offset   = offsetForPage(holder.page, holder.chapter);
+            int capacity = totalCapacity(holder.chapter);
 
-        ItemStack[] allItems = storageManager.loadStorage(player, capacity);
-        for (int i = 0; i < itemSlots.size(); i++) {
-            int storageIdx = offset + i;
-            if (storageIdx < capacity) {
-                allItems[storageIdx] = event.getInventory().getItem(itemSlots.get(i));
+            ItemStack[] allItems = storageManager.loadStorage(player, capacity);
+            for (int i = 0; i < itemSlots.size(); i++) {
+                int storageIdx = offset + i;
+                if (storageIdx < capacity) {
+                    allItems[storageIdx] = event.getInventory().getItem(itemSlots.get(i));
+                }
             }
-        }
-        storageManager.saveStorage(player, allItems);
+            storageManager.saveStorage(player, allItems);
+        } catch (IllegalStateException ignored) {}
     }
 
-    // -------------------------------------------------------------------------
+    
     // Slot helpers
-    // -------------------------------------------------------------------------
+    
 
     public static List<Integer> availableSlots(int page, int chapter) {
         Set<Integer> reserved = new HashSet<>();
@@ -166,9 +168,9 @@ public class StorageGui implements Listener {
         return total;
     }
 
-    // -------------------------------------------------------------------------
+    
     // Item builders
-    // -------------------------------------------------------------------------
+    
 
     private static ItemStack navButton(boolean next) {
         ItemStack item = new ItemStack(next ? Material.ARROW : Material.SPECTRAL_ARROW);
@@ -203,9 +205,9 @@ public class StorageGui implements Listener {
         return item;
     }
 
-    // -------------------------------------------------------------------------
+    
     // Holder
-    // -------------------------------------------------------------------------
+    
 
     public static class StorageHolder implements InventoryHolder {
         public final String locationName;

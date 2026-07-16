@@ -135,8 +135,10 @@ public class SaveMenuGui implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!(event.getInventory().getHolder() instanceof SaveMenuHolder)) return;
-        cancelExpiry(event.getPlayer().getUniqueId());
+        try {
+            if (!(event.getInventory().getHolder() instanceof SaveMenuHolder)) return;
+            cancelExpiry(event.getPlayer().getUniqueId());
+        } catch (IllegalStateException ignored) {}
     }
 
     private void cancelExpiry(UUID uuid) {

@@ -6,21 +6,9 @@
 
 ---
 
-## 🗄️ Table of Contents
-* [💾 Installation](#-installation)
-* [🏃‍♂️ Quick Start](#-quick-start)
-* [🌟 Features](#-features)
-* [📜 Commands](#-commands)
-* [⚙️ Configuration](#-configuration)
-* [🔐 Permissions](#-permissions)
-* [📂 Data Storage](#-data-storage)
-* [🛠️ Compatibility](#-compatibility)
-
----
-
 ## 💾 Installation
 
-1. Download the latest .jar file from the releases page
+1. Download the latest .jar file from the versions page
 2. Drop the downloaded .jar into your server's `plugins/` directory.
 3. Restart your server to generate necessary configuration files. If you're updating from a previous version, delete the old config.yml to generate the fresh version with new options.
 4. Customize `config.yml` to your liking and restart your server again.
@@ -90,7 +78,7 @@ A beautiful, DELTARUNE-styled inventory GUI accessible from any save block:
 | `/togglebeacongui` | `/togglebeacongui` | 🚫 Toggle blocking of the vanilla beacon GUI |
 | `/scannow` | `/scannow` | 🔎 Instantly scan for and unregister missing save blocks |
 
-> **Example:** `/givesaveblock "Card Castle - ??????" 1`
+> **Example:** `/givesaveblock "Fortress - Entrance" 1`
 
 ---
 
@@ -131,6 +119,14 @@ Fully customize every **message**, **sound effect**, and **beacon flavor text** 
 
 ---
 
+## 🔗 Dependencies
+
+Nothing. **DeltaSave is a standalone plugin.**
+
+However, for permissions control, it would be beneficial to add permissions plugins such as [**LuckPerms**](https://luckperms.net/) or [**UltraPermissions**](https://ultrapermissions.com/).
+
+---
+
 ## 🛠️ Compatibility
 
 * **Minecraft API:** `26.1`
@@ -139,3 +135,5 @@ Fully customize every **message**, **sound effect**, and **beacon flavor text** 
 ---
 
 * Built with **DETERMINATION**.
+
+*Disclaimer: DeltaSave is an independent fan-made plugin. It is not affiliated, endorsed by, or associated with Toby Fox and the DELTARUNE team in any way.*

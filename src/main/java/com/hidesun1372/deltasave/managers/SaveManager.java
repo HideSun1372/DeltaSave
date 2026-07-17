@@ -98,38 +98,38 @@ public class SaveManager implements Listener {
 
     private void loadConfig() {
         FileConfiguration cfg = plugin.getConfig();
-        PREFIX                = cfg.getString("prefix", "§6[SAVE] §r");
-        blockBeaconGui        = cfg.getBoolean("block-beacon-gui", true);
-        scanInterval          = cfg.getLong("scan-interval", 1200L);
-        beaconMsgCooldown     = cfg.getLong("beacon-message-cooldown", 140L);
+        PREFIX = cfg.getString("prefix", "§6[SAVE] §r");
+        blockBeaconGui = cfg.getBoolean("block-beacon-gui", true);
+        scanInterval = cfg.getLong("scan-interval", 1200L);
+        beaconMsgCooldown = cfg.getLong("beacon-message-cooldown", 140L);
         deleteConfirmTimeoutGui = cfg.getLong("delete-confirm-timeout-gui", 160L);
         deleteConfirmTimeoutCmd = cfg.getLong("delete-confirm-timeout-command", 160L);
-        List<String> fromCfg  = cfg.getStringList("beacon-messages");
+        List<String> fromCfg = cfg.getStringList("beacon-messages");
         if (!fromCfg.isEmpty()) beaconMessages = fromCfg;
         if (!cfg.contains("defaultspawn")) return;
         defaultSpawnWorld = cfg.getString("defaultspawn.world");
-        defaultSpawnX     = cfg.getDouble("defaultspawn.x");
-        defaultSpawnY     = cfg.getDouble("defaultspawn.y");
-        defaultSpawnZ     = cfg.getDouble("defaultspawn.z");
-        defaultSpawnYaw   = (float) cfg.getDouble("defaultspawn.yaw");
+        defaultSpawnX = cfg.getDouble("defaultspawn.x");
+        defaultSpawnY = cfg.getDouble("defaultspawn.y");
+        defaultSpawnZ = cfg.getDouble("defaultspawn.z");
+        defaultSpawnYaw = (float) cfg.getDouble("defaultspawn.yaw");
         defaultSpawnPitch = (float) cfg.getDouble("defaultspawn.pitch");
     }
 
     public void setDefaultSpawn(Player player) {
         Location loc = player.getLocation();
         defaultSpawnWorld = loc.getWorld().getName();
-        defaultSpawnX     = loc.getX();
-        defaultSpawnY     = loc.getY();
-        defaultSpawnZ     = loc.getZ();
-        defaultSpawnYaw   = loc.getYaw();
+        defaultSpawnX = loc.getX();
+        defaultSpawnY = loc.getY();
+        defaultSpawnZ = loc.getZ();
+        defaultSpawnYaw = loc.getYaw();
         defaultSpawnPitch = loc.getPitch();
         FileConfiguration cfg = plugin.getConfig();
-        cfg.set("defaultspawn.world",  defaultSpawnWorld);
-        cfg.set("defaultspawn.x",      defaultSpawnX);
-        cfg.set("defaultspawn.y",      defaultSpawnY);
-        cfg.set("defaultspawn.z",      defaultSpawnZ);
-        cfg.set("defaultspawn.yaw",    (double) defaultSpawnYaw);
-        cfg.set("defaultspawn.pitch",  (double) defaultSpawnPitch);
+        cfg.set("defaultspawn.world", defaultSpawnWorld);
+        cfg.set("defaultspawn.x", defaultSpawnX);
+        cfg.set("defaultspawn.y", defaultSpawnY);
+        cfg.set("defaultspawn.z", defaultSpawnZ);
+        cfg.set("defaultspawn.yaw", (double) defaultSpawnYaw);
+        cfg.set("defaultspawn.pitch", (double) defaultSpawnPitch);
         plugin.saveConfig();
         player.sendMessage(PREFIX + "§aDefault spawn set!");
     }
@@ -169,8 +169,8 @@ public class SaveManager implements Listener {
         List<Map<String, Object>> list = new ArrayList<>();
         for (Map.Entry<String, SaveBlockData> entry : saveBlockLocations.entrySet()) {
             Map<String, Object> m = new LinkedHashMap<>();
-            m.put("key",     entry.getKey());
-            m.put("name",    entry.getValue().name());
+            m.put("key", entry.getKey());
+            m.put("name", entry.getValue().name());
             m.put("chapter", entry.getValue().chapter());
             list.add(m);
         }
@@ -236,31 +236,31 @@ public class SaveManager implements Listener {
 
         Location loc = player.getLocation();
         cfg.set("location.world",  loc.getWorld().getName());
-        cfg.set("location.x",     loc.getX());
-        cfg.set("location.y",     loc.getY());
-        cfg.set("location.z",     loc.getZ());
-        cfg.set("location.yaw",   (double) loc.getYaw());
+        cfg.set("location.x", loc.getX());
+        cfg.set("location.y", loc.getY());
+        cfg.set("location.z", loc.getZ());
+        cfg.set("location.yaw", (double) loc.getYaw());
         cfg.set("location.pitch", (double) loc.getPitch());
 
-        cfg.set("health",     player.getHealth());
-        cfg.set("maxhealth",  maxHp);
-        cfg.set("food",       player.getFoodLevel());
+        cfg.set("health", player.getHealth());
+        cfg.set("maxhealth", maxHp);
+        cfg.set("food", player.getFoodLevel());
         cfg.set("saturation", (double) player.getSaturation());
 
         for (int i = 0; i < 36; i++) {
             cfg.set("inventory." + i, player.getInventory().getItem(i));
         }
-        cfg.set("armor.helmet",     player.getInventory().getHelmet());
+        cfg.set("armor.helmet", player.getInventory().getHelmet());
         cfg.set("armor.chestplate", player.getInventory().getChestplate());
-        cfg.set("armor.leggings",   player.getInventory().getLeggings());
-        cfg.set("armor.boots",      player.getInventory().getBoots());
+        cfg.set("armor.leggings", player.getInventory().getLeggings());
+        cfg.set("armor.boots", player.getInventory().getBoots());
 
         cfg.set("effects", null);
         int ei = 0;
         for (PotionEffect effect : player.getActivePotionEffects()) {
             ei++;
-            cfg.set("effects." + ei + ".type",      effect.getType().getKey().getKey());
-            cfg.set("effects." + ei + ".duration",  effect.getDuration());
+            cfg.set("effects." + ei + ".type", effect.getType().getKey().getKey());
+            cfg.set("effects." + ei + ".duration", effect.getDuration());
             cfg.set("effects." + ei + ".amplifier", effect.getAmplifier());
         }
 
@@ -301,8 +301,8 @@ public class SaveManager implements Listener {
         player.sendMessage("");
         player.sendMessage(PREFIX + msg("save-success"));
         if (player.hasPermission("deltasave.admin")) {
-            player.sendMessage("§8§o   " + loc);
-            player.sendMessage("§8§o   Blocks placed: " + curPlaced
+            player.sendMessage("§8§o" + loc);
+            player.sendMessage("§8§oBlocks placed: " + curPlaced
                     + " (+" + (curPlaced - prevPlaced) + ")"
                     + " | Blocks broken: " + curBroken
                     + " (+" + (curBroken - prevBroken) + ")");
@@ -432,14 +432,14 @@ public class SaveManager implements Listener {
         FileConfiguration cfg = YamlConfiguration.loadConfiguration(f);
 
         long accumulated = cfg.getLong("playtime.accumulated", 0L);
-        long start       = cfg.getLong("playtime.start", 0L);
-        long totalMs     = accumulated + (start > 0 ? System.currentTimeMillis() - start : 0L);
+        long start = cfg.getLong("playtime.start", 0L);
+        long totalMs = accumulated + (start > 0 ? System.currentTimeMillis() - start : 0L);
 
         UUID uuid = target.getUniqueId();
         int unsavedPlaced = placedBuffer.getOrDefault(uuid, List.of()).size();
         int unsavedBroken = brokenBuffer.getOrDefault(uuid, List.of()).size();
-        int savedPlaced   = cfg.getInt("save.blocks.placed.count", 0);
-        int savedBroken   = cfg.getInt("save.blocks.broken.count", 0);
+        int savedPlaced = cfg.getInt("save.blocks.placed.count", 0);
+        int savedBroken = cfg.getInt("save.blocks.broken.count", 0);
 
         sender.sendMessage(PREFIX + "§6Save Info for " + target.getName() + ":");
         sender.sendMessage("§7  Player: §f"   + cfg.getString("name", target.getName()));
@@ -476,9 +476,9 @@ public class SaveManager implements Listener {
 
     public String formatPlaytime(long ms) {
         long seconds = ms / 1000;
-        long hours   = seconds / 3600;
+        long hours = seconds / 3600;
         long minutes = (seconds % 3600) / 60;
-        long secs    = seconds % 60;
+        long secs = seconds % 60;
         return hours + "h " + minutes + "m " + secs + "s";
     }
 
@@ -500,10 +500,10 @@ public class SaveManager implements Listener {
         String displayName = PlainTextComponentSerializer.plainText().serialize(nameComponent);
         if (!displayName.equals("Save Block")) return;
 
-        NamespacedKey nameKey    = new NamespacedKey(plugin, "save_block_location");
+        NamespacedKey nameKey = new NamespacedKey(plugin, "save_block_location");
         NamespacedKey chapterKey = new NamespacedKey(plugin, "save_block_chapter");
         String locationName = heldMeta.getPersistentDataContainer().get(nameKey, PersistentDataType.STRING);
-        Integer chapter     = heldMeta.getPersistentDataContainer().get(chapterKey, PersistentDataType.INTEGER);
+        Integer chapter = heldMeta.getPersistentDataContainer().get(chapterKey, PersistentDataType.INTEGER);
         if (locationName == null || chapter == null) {
             player.sendMessage(PREFIX + "§cThis Save Block is missing data. Use /givesaveblock to get a valid one.");
             event.setCancelled(true);
@@ -600,7 +600,7 @@ public class SaveManager implements Listener {
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
-        Location to   = event.getTo();
+        Location to = event.getTo();
         Location from = event.getFrom();
         if (to.getBlockX() == from.getBlockX()
                 && to.getBlockY() == from.getBlockY()

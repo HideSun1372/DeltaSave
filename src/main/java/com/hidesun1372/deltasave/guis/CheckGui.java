@@ -90,7 +90,7 @@ public class CheckGui implements Listener {
         inv.setItem(5, stat(Material.COBBLESTONE, brokenName,
                 Component.text("Blocks Broken").color(NamedTextColor.GRAY)));
 
-        inv.setItem(6, filler());
+        inv.setItem(6, SaveMenuGui.filler());
 
         inv.setItem(7, button(Material.ARROW,
                 Component.text("BACK").color(NamedTextColor.YELLOW).decorate(TextDecoration.BOLD),
@@ -132,14 +132,6 @@ public class CheckGui implements Listener {
 
     private static ItemStack button(Material material, Component name, Component... lore) {
         return stat(material, name, lore);
-    }
-
-    private static ItemStack filler() {
-        ItemStack item = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
-        ItemMeta meta = item.getItemMeta();
-        meta.displayName(Component.empty());
-        item.setItemMeta(meta);
-        return item;
     }
 
     public static class CheckHolder implements InventoryHolder {

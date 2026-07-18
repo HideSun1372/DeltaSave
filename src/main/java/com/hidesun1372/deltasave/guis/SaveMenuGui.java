@@ -7,6 +7,8 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -71,14 +73,19 @@ public class SaveMenuGui implements Listener {
         long timeoutSecs = saveManager.getDeleteConfirmTimeoutGui() / 20;
         inv.setItem(3, deleteButton(false, timeoutSecs));
 
-        ItemStack filler = filler();
         for (int i = 4; i <= 7; i++) {
-            inv.setItem(i, filler);
+            inv.setItem(i, filler());
         }
 
         inv.setItem(8, button(Material.BARRIER,
                 Component.text("CLOSE").color(NamedTextColor.RED).decorate(TextDecoration.BOLD),
                 Component.text("Close this menu.").color(NamedTextColor.GRAY)));
+
+        AttributeInstance maxHpAttr = player.getAttribute(Attribute.MAX_HEALTH);
+        double maxHp = maxHpAttr != null ? maxHpAttr.getValue() : 20.0;
+        player.setHealth(maxHp);
+        player.setFoodLevel(20);
+        player.setSaturation(20f);
 
         holder.setInventory(inv);
         player.openInventory(inv);
@@ -154,7 +161,7 @@ public class SaveMenuGui implements Listener {
                 Component.text("Permanently delete your save file.").color(NamedTextColor.GRAY));
     }
 
-    private static ItemStack filler() {
+    public static ItemStack filler() {
         ItemStack item = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(Component.empty());

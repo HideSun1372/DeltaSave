@@ -130,7 +130,7 @@ However, for permissions control, it would be beneficial to add permissions plug
 ## 🛠️ Compatibility
 
 * **Minecraft API:** `1.21.4`
-* **Latest Plugin Version:** `1.4`
+* **Latest Plugin Version:** `1.4.1`
 
 ---
 

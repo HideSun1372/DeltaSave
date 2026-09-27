@@ -10,16 +10,15 @@ import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -47,6 +46,7 @@ public class SaveManager implements Listener {
 
     private final Map<UUID, List<BlockEntry>> placedBuffer = new HashMap<>();
     private final Map<UUID, List<BlockEntry>> brokenBuffer = new HashMap<>();
+    private final Map<UUID, List<EntityEntry>> itemBuffer = new HashMap<>();
 
     private final Map<UUID, Boolean> deleteConfirm = new HashMap<>();
 
@@ -70,6 +70,7 @@ public class SaveManager implements Listener {
     public void setSaveMenuGui(SaveMenuGui gui) { this.saveMenuGui = gui; }
 
     record BlockEntry(String world, int x, int y, int z, String type) {}
+    record EntityEntry(String world, double x, double y, double z, String type, UUID entityUUID, UUID throwerUUID) {}
 
     public SaveManager(DeltaSavePlugin plugin) {
         this.plugin = plugin;
@@ -293,6 +294,8 @@ public class SaveManager implements Listener {
         cfg.set("save.blocks.broken.count", curBroken);
         brokenBuffer.remove(uuid);
 
+        itemBuffer.remove(uuid);
+
         cfg.set("checkpoint.set", true);
         checkpointSet.add(uuid);
 
@@ -382,6 +385,19 @@ public class SaveManager implements Listener {
         int rolledBroken = bufferedBroken.size();
         brokenBuffer.remove(uuid);
 
+        List<EntityEntry> bufferedItems = itemBuffer.getOrDefault(uuid, List.of());
+        int rolledItems = 0;
+        for (EntityEntry e : bufferedItems) {
+            World w = Bukkit.getWorld(e.world());
+            if (w == null) continue;
+            Entity ent = w.getEntity(e.entityUUID());
+            if (ent instanceof Item item && uuid.equals(item.getThrower())) {
+                item.remove();
+                rolledItems++;
+            }
+        }
+        itemBuffer.remove(uuid);
+
         cfg.set("playtime.start", System.currentTimeMillis());
         trySave(cfg, f, player);
 
@@ -390,7 +406,8 @@ public class SaveManager implements Listener {
         player.sendMessage(PREFIX + msg("load-success"));
         if (player.hasPermission("deltasave.admin")) {
             player.sendMessage("§a§lRestored " + rolledPlaced
-                    + " placed and " + rolledBroken + " broken blocks.");
+                    + " placed and " + rolledBroken + " broken blocks"
+                    + " and " + rolledItems + " dropped items.");
         }
         playConfigSound(player, "load");
     }
@@ -404,6 +421,7 @@ public class SaveManager implements Listener {
         checkpointSet.remove(uuid);
         placedBuffer.remove(uuid);
         brokenBuffer.remove(uuid);
+        itemBuffer.remove(uuid);
 
         target.getInventory().clear();
         target.getInventory().setHelmet(null);
@@ -438,6 +456,7 @@ public class SaveManager implements Listener {
         UUID uuid = target.getUniqueId();
         int unsavedPlaced = placedBuffer.getOrDefault(uuid, List.of()).size();
         int unsavedBroken = brokenBuffer.getOrDefault(uuid, List.of()).size();
+        int unsavedItems = getUnsavedItemsCount(uuid);
         int savedPlaced = cfg.getInt("save.blocks.placed.count", 0);
         int savedBroken = cfg.getInt("save.blocks.broken.count", 0);
 
@@ -457,6 +476,8 @@ public class SaveManager implements Listener {
                 + (unsavedPlaced > 0 ? " §7(+" + unsavedPlaced + " unsaved)" : ""));
         sender.sendMessage("§7  Blocks broken: §f" + savedBroken
                 + (unsavedBroken > 0 ? " §7(+" + unsavedBroken + " unsaved)" : ""));
+        sender.sendMessage("§7  Items dropped: §f0"
+                + (unsavedItems > 0 ? " §7(+" + unsavedItems + " unsaved)" : ""));
     }
 
     public FileConfiguration getSaveConfig(Player player) {
@@ -472,6 +493,10 @@ public class SaveManager implements Listener {
 
     public int getUnsavedBrokenCount(UUID uuid) {
         return brokenBuffer.getOrDefault(uuid, List.of()).size();
+    }
+
+    public int getUnsavedItemsCount(UUID uuid) {
+        return itemBuffer.getOrDefault(uuid, List.of()).size();
     }
 
     public String formatPlaytime(long ms) {
@@ -595,6 +620,18 @@ public class SaveManager implements Listener {
         brokenBuffer
                 .computeIfAbsent(player.getUniqueId(), _ -> new ArrayList<>())
                 .add(new BlockEntry(b.getWorld().getName(), b.getX(), b.getY(), b.getZ(), b.getType().name()));
+    }
+
+    @EventHandler
+    public void onItemDrop(PlayerDropItemEvent event) {
+        Player player = event.getPlayer();
+
+        if (!checkpointSet.contains(player.getUniqueId())) return;
+        Item item = event.getItemDrop();
+        itemBuffer
+                .computeIfAbsent(player.getUniqueId(), _ -> new ArrayList<>())
+                .add(new EntityEntry(item.getWorld().getName(), item.getX(), item.getY(), item.getZ(), item.getType().name(), item.getUniqueId(), item.getThrower()));
+
     }
 
     @EventHandler

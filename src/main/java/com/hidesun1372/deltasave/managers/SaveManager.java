@@ -18,6 +18,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -47,6 +48,8 @@ public class SaveManager implements Listener {
     private final Map<UUID, List<BlockEntry>> placedBuffer = new HashMap<>();
     private final Map<UUID, List<BlockEntry>> brokenBuffer = new HashMap<>();
     private final Map<UUID, List<EntityEntry>> itemBuffer = new HashMap<>();
+    private final Map<UUID, UUID> itemEntityThrower = new HashMap<>();
+    private final Map<UUID, List<ItemStack>> stolenBuffer = new HashMap<>();
 
     private final Map<UUID, Boolean> deleteConfirm = new HashMap<>();
 
@@ -70,7 +73,7 @@ public class SaveManager implements Listener {
     public void setSaveMenuGui(SaveMenuGui gui) { this.saveMenuGui = gui; }
 
     record BlockEntry(String world, int x, int y, int z, String type) {}
-    record EntityEntry(String world, double x, double y, double z, String type, UUID entityUUID, UUID throwerUUID) {}
+    record EntityEntry(String world, UUID entityUUID, UUID throwerUUID, ItemStack stack) {}
 
     public SaveManager(DeltaSavePlugin plugin) {
         this.plugin = plugin;
@@ -195,6 +198,12 @@ public class SaveManager implements Listener {
         return new File(dir, player.getUniqueId() + ".yml");
     }
 
+    private void clearItemTracking(UUID uuid) {
+        itemBuffer.remove(uuid);
+        stolenBuffer.remove(uuid);
+        itemEntityThrower.values().removeIf(uuid::equals);
+    }
+
     private void trySave(FileConfiguration cfg, File f, Player player) {
         try {
             cfg.save(f);
@@ -294,7 +303,7 @@ public class SaveManager implements Listener {
         cfg.set("save.blocks.broken.count", curBroken);
         brokenBuffer.remove(uuid);
 
-        itemBuffer.remove(uuid);
+        clearItemTracking(uuid);
 
         cfg.set("checkpoint.set", true);
         checkpointSet.add(uuid);
@@ -353,6 +362,14 @@ public class SaveManager implements Listener {
         player.getInventory().setLeggings(cfg.getItemStack("armor.leggings"));
         player.getInventory().setBoots(cfg.getItemStack("armor.boots"));
 
+        UUID uuid = player.getUniqueId();
+
+        List<ItemStack> stolen = stolenBuffer.getOrDefault(uuid, List.of());
+        for (ItemStack stack : stolen) {
+            player.getInventory().removeItemAnySlot(stack);
+        }
+        int clawedBack = stolen.size();
+
         player.getActivePotionEffects().forEach(e -> player.removePotionEffect(e.getType()));
         ConfigurationSection effects = cfg.getConfigurationSection("effects");
         if (effects != null) {
@@ -365,8 +382,6 @@ public class SaveManager implements Listener {
                 if (pet != null) player.addPotionEffect(new PotionEffect(pet, duration, amplifier));
             }
         }
-
-        UUID uuid = player.getUniqueId();
 
         List<BlockEntry> bufferedPlaced = placedBuffer.getOrDefault(uuid, List.of());
         for (BlockEntry e : bufferedPlaced) {
@@ -396,7 +411,7 @@ public class SaveManager implements Listener {
                 rolledItems++;
             }
         }
-        itemBuffer.remove(uuid);
+        clearItemTracking(uuid);
 
         cfg.set("playtime.start", System.currentTimeMillis());
         trySave(cfg, f, player);
@@ -407,7 +422,8 @@ public class SaveManager implements Listener {
         if (player.hasPermission("deltasave.admin")) {
             player.sendMessage("§a§lRestored " + rolledPlaced
                     + " placed and " + rolledBroken + " broken blocks"
-                    + " and " + rolledItems + " dropped items.");
+                    + " and " + rolledItems + " dropped items"
+                    + ", deleted " + clawedBack + " from a dropper's inventory");
         }
         playConfigSound(player, "load");
     }
@@ -421,7 +437,7 @@ public class SaveManager implements Listener {
         checkpointSet.remove(uuid);
         placedBuffer.remove(uuid);
         brokenBuffer.remove(uuid);
-        itemBuffer.remove(uuid);
+        clearItemTracking(uuid);
 
         target.getInventory().clear();
         target.getInventory().setHelmet(null);
@@ -630,8 +646,29 @@ public class SaveManager implements Listener {
         Item item = event.getItemDrop();
         itemBuffer
                 .computeIfAbsent(player.getUniqueId(), _ -> new ArrayList<>())
-                .add(new EntityEntry(item.getWorld().getName(), item.getX(), item.getY(), item.getZ(), item.getType().name(), item.getUniqueId(), item.getThrower()));
+                .add(new EntityEntry(item.getWorld().getName(), item.getUniqueId(), player.getUniqueId(), item.getItemStack().clone()));
+        itemEntityThrower.put(item.getUniqueId(), player.getUniqueId());
+    }
 
+    @EventHandler
+    public void onItemPickup(EntityPickupItemEvent event) {
+        UUID entityUUID = event.getItem().getUniqueId();
+        UUID throwerUUID = itemEntityThrower.get(entityUUID);
+        if (throwerUUID == null) return;
+
+        boolean selfPickup = event.getEntity().getUniqueId().equals(throwerUUID);
+        if (!selfPickup) {
+            int picked = event.getItem().getItemStack().getAmount() - event.getRemaining();
+            ItemStack taken = event.getItem().getItemStack().clone();
+            taken.setAmount(picked);
+            stolenBuffer.computeIfAbsent(throwerUUID, _ -> new ArrayList<>()).add(taken);
+        }
+
+        if (event.getRemaining() == 0) {
+            itemEntityThrower.remove(entityUUID);
+            List<EntityEntry> entries = itemBuffer.get(throwerUUID);
+            if (entries != null) entries.removeIf(e -> e.entityUUID().equals(entityUUID));
+        }
     }
 
     @EventHandler

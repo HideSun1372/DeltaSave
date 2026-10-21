@@ -3,7 +3,7 @@ description: $description
 version: '${version}'
 
 main: com.hidesun1372.deltasave.DeltaSavePlugin
-api-version: '26.2'
+api-version: '1.21.4'
 load: POSTWORLD
 
 authors: [hidesun1372]

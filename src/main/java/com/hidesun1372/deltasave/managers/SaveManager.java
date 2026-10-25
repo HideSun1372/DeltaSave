@@ -17,6 +17,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.player.*;
@@ -51,6 +52,11 @@ public class SaveManager implements Listener {
     private final Map<UUID, UUID> itemEntityThrower = new HashMap<>();
     private final Map<UUID, List<ItemStack>> stolenBuffer = new HashMap<>();
 
+    private final Map<UUID, BlockEntry> pendingBreak = new HashMap<>();
+    private final Map<UUID, BlockDropLink> blockDropLinks = new HashMap<>();
+    private final Map<UUID, Set<BlockEntry>> suppressedRestores = new HashMap<>();
+    private final Map<UUID, List<BlockEntry>> reclaimedBreaks = new HashMap<>();
+
     private final Map<UUID, Boolean> deleteConfirm = new HashMap<>();
 
     private final Set<UUID> beaconMsgCooldowns = new HashSet<>();
@@ -74,6 +80,7 @@ public class SaveManager implements Listener {
 
     record BlockEntry(String world, int x, int y, int z, String type) {}
     record EntityEntry(String world, UUID entityUUID, UUID throwerUUID, ItemStack stack) {}
+    record BlockDropLink(UUID breakerUUID, BlockEntry block) {}
 
     public SaveManager(DeltaSavePlugin plugin) {
         this.plugin = plugin;
@@ -204,6 +211,13 @@ public class SaveManager implements Listener {
         itemEntityThrower.values().removeIf(uuid::equals);
     }
 
+    private void clearBlockDropTracking(UUID uuid) {
+        suppressedRestores.remove(uuid);
+        pendingBreak.remove(uuid);
+        reclaimedBreaks.remove(uuid);
+        blockDropLinks.values().removeIf(link -> link.breakerUUID().equals(uuid));
+    }
+
     private void trySave(FileConfiguration cfg, File f, Player player) {
         try {
             cfg.save(f);
@@ -304,6 +318,7 @@ public class SaveManager implements Listener {
         brokenBuffer.remove(uuid);
 
         clearItemTracking(uuid);
+        clearBlockDropTracking(uuid);
 
         cfg.set("checkpoint.set", true);
         checkpointSet.add(uuid);
@@ -344,6 +359,26 @@ public class SaveManager implements Listener {
                 (float) cfg.getDouble("location.pitch"));
         player.teleport(loc);
 
+        UUID uuid = player.getUniqueId();
+
+        List<BlockEntry> reclaimed = reclaimedBreaks.getOrDefault(uuid, List.of());
+        if (!reclaimed.isEmpty()) {
+            Map<String, Integer> have = new HashMap<>();
+            for (int i = 0; i < 36; i++) {
+                ItemStack item = player.getInventory().getItem(i);
+                if (item != null) have.merge(item.getType().name(), item.getAmount(), Integer::sum);
+            }
+            for (BlockEntry e : reclaimed) {
+                int count = have.getOrDefault(e.type(), 0);
+                if (count > 0) {
+                    have.put(e.type(), count - 1);
+                } else {
+                    suppressedRestores.computeIfAbsent(uuid, _ -> new HashSet<>()).add(e);
+                }
+            }
+            reclaimedBreaks.remove(uuid);
+        }
+
         Attribute maxHpAttr = Registry.ATTRIBUTE.get(NamespacedKey.minecraft("max_health"));
         AttributeInstance attr = maxHpAttr != null ? player.getAttribute(maxHpAttr) : null;
         if (attr != null) attr.setBaseValue(cfg.getDouble("maxhealth", 20.0));
@@ -361,8 +396,6 @@ public class SaveManager implements Listener {
         player.getInventory().setChestplate(cfg.getItemStack("armor.chestplate"));
         player.getInventory().setLeggings(cfg.getItemStack("armor.leggings"));
         player.getInventory().setBoots(cfg.getItemStack("armor.boots"));
-
-        UUID uuid = player.getUniqueId();
 
         List<ItemStack> stolen = stolenBuffer.getOrDefault(uuid, List.of());
         for (ItemStack stack : stolen) {
@@ -391,14 +424,31 @@ public class SaveManager implements Listener {
         int rolledPlaced = bufferedPlaced.size();
         placedBuffer.remove(uuid);
 
+        Set<BlockEntry> suppressed = suppressedRestores.getOrDefault(uuid, Set.of());
         List<BlockEntry> bufferedBroken = brokenBuffer.getOrDefault(uuid, List.of());
+        int rolledBroken = 0;
         for (BlockEntry e : bufferedBroken) {
+            if (suppressed.contains(e)) continue;
             World w = Bukkit.getWorld(e.world());
             Material mat = Material.matchMaterial(e.type());
-            if (w != null && mat != null) w.getBlockAt(e.x(), e.y(), e.z()).setType(mat);
+            if (w != null && mat != null) {
+                w.getBlockAt(e.x(), e.y(), e.z()).setType(mat);
+                rolledBroken++;
+            }
         }
-        int rolledBroken = bufferedBroken.size();
         brokenBuffer.remove(uuid);
+
+        for (Iterator<Map.Entry<UUID, BlockDropLink>> it = blockDropLinks.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<UUID, BlockDropLink> le = it.next();
+            BlockDropLink link = le.getValue();
+            if (!link.breakerUUID().equals(uuid)) continue;
+            if (!suppressed.contains(link.block())) {
+                World w = Bukkit.getWorld(link.block().world());
+                if (w != null && w.getEntity(le.getKey()) instanceof Item item) item.remove();
+            }
+            it.remove();
+        }
+        clearBlockDropTracking(uuid);
 
         List<EntityEntry> bufferedItems = itemBuffer.getOrDefault(uuid, List.of());
         int rolledItems = 0;
@@ -438,6 +488,7 @@ public class SaveManager implements Listener {
         placedBuffer.remove(uuid);
         brokenBuffer.remove(uuid);
         clearItemTracking(uuid);
+        clearBlockDropTracking(uuid);
 
         target.getInventory().clear();
         target.getInventory().setHelmet(null);
@@ -633,9 +684,23 @@ public class SaveManager implements Listener {
 
         if (!checkpointSet.contains(player.getUniqueId())) return;
         Block b = event.getBlock();
+        BlockEntry entry = new BlockEntry(b.getWorld().getName(), b.getX(), b.getY(), b.getZ(), b.getType().name());
         brokenBuffer
                 .computeIfAbsent(player.getUniqueId(), _ -> new ArrayList<>())
-                .add(new BlockEntry(b.getWorld().getName(), b.getX(), b.getY(), b.getZ(), b.getType().name()));
+                .add(entry);
+        pendingBreak.put(player.getUniqueId(), entry);
+    }
+
+    @EventHandler
+    public void onBlockDropItem(BlockDropItemEvent event) {
+        Player player = event.getPlayer();
+
+        if (!checkpointSet.contains(player.getUniqueId())) return;
+        BlockEntry entry = pendingBreak.remove(player.getUniqueId());
+        if (entry == null) return;
+        for (Item item : event.getItems()) {
+            blockDropLinks.put(item.getUniqueId(), new BlockDropLink(player.getUniqueId(), entry));
+        }
     }
 
     @EventHandler
@@ -654,20 +719,31 @@ public class SaveManager implements Listener {
     public void onItemPickup(EntityPickupItemEvent event) {
         UUID entityUUID = event.getItem().getUniqueId();
         UUID throwerUUID = itemEntityThrower.get(entityUUID);
-        if (throwerUUID == null) return;
+        if (throwerUUID != null) {
+            boolean selfPickup = event.getEntity().getUniqueId().equals(throwerUUID);
+            if (!selfPickup) {
+                int picked = event.getItem().getItemStack().getAmount() - event.getRemaining();
+                ItemStack taken = event.getItem().getItemStack().clone();
+                taken.setAmount(picked);
+                stolenBuffer.computeIfAbsent(throwerUUID, _ -> new ArrayList<>()).add(taken);
+            }
 
-        boolean selfPickup = event.getEntity().getUniqueId().equals(throwerUUID);
-        if (!selfPickup) {
-            int picked = event.getItem().getItemStack().getAmount() - event.getRemaining();
-            ItemStack taken = event.getItem().getItemStack().clone();
-            taken.setAmount(picked);
-            stolenBuffer.computeIfAbsent(throwerUUID, _ -> new ArrayList<>()).add(taken);
+            if (event.getRemaining() == 0) {
+                itemEntityThrower.remove(entityUUID);
+                List<EntityEntry> entries = itemBuffer.get(throwerUUID);
+                if (entries != null) entries.removeIf(e -> e.entityUUID().equals(entityUUID));
+            }
         }
 
-        if (event.getRemaining() == 0) {
-            itemEntityThrower.remove(entityUUID);
-            List<EntityEntry> entries = itemBuffer.get(throwerUUID);
-            if (entries != null) entries.removeIf(e -> e.entityUUID().equals(entityUUID));
+        BlockDropLink link = blockDropLinks.get(entityUUID);
+        if (link != null) {
+            boolean selfPickup = event.getEntity().getUniqueId().equals(link.breakerUUID());
+            if (!selfPickup) {
+                suppressedRestores.computeIfAbsent(link.breakerUUID(), _ -> new HashSet<>()).add(link.block());
+            } else {
+                reclaimedBreaks.computeIfAbsent(link.breakerUUID(), _ -> new ArrayList<>()).add(link.block());
+            }
+            if (event.getRemaining() == 0) blockDropLinks.remove(entityUUID);
         }
     }
 
